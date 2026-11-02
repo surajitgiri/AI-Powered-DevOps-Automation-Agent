@@ -1,0 +1,72 @@
+# ---------- Secrets / environment ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials
+*.tfvars
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+celerybeat-schedule*
+
+# ---------- Node / Next.js ----------
+node_modules/
+.next/
+out/
+.vercel/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+frontend/.env.local
+
+# ---------- Databases / local data ----------
+*.db
+*.sqlite
+*.sqlite3
+chroma/
+chroma_db/
+faiss_index/
+vector_store/
+redis-data/
+postgres-data/
+pgdata/
+
+# ---------- Logs ----------
+*.log
+logs/
+
+# ---------- Docker / infra ----------
+docker-compose.override.yml
+.terraform/
+*.tfstate
+*.tfstate.*
+infrastructure/monitoring/grafana/data/
+
+# ---------- IDE / OS ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+

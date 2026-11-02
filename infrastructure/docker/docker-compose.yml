@@ -1,0 +1,36 @@
+services:
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: opspilot-postgres
+
+    environment:
+      POSTGRES_USER: opspilot
+      POSTGRES_PASSWORD: opspilot123
+      POSTGRES_DB: opspilot_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U opspilot -d opspilot_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: opspilot-redis
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
