@@ -5,6 +5,7 @@ from uuid import UUID
 from app.core.database import get_db
 from app.models.project import Project
 from app.models.user import User
+from app.api.dependencies import get_current_user
 
 router = APIRouter()
 
@@ -26,7 +27,8 @@ class ProjectCreate(BaseModel):
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_project(
     request: ProjectCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     # Verify user exists
     user = db.query(User).filter(User.id == request.user_id).first()
@@ -37,7 +39,7 @@ def create_project(
         )
 
     project = Project(
-        user_id=request.user_id,
+        user_id=current_user.user_id,
         name=request.name,
         description=request.description,
         repository_url=request.repository_url,
@@ -58,8 +60,10 @@ def create_project(
     }
 
 @router.get("/")
-def get_projects(db: Session = Depends(get_db)):
+def get_projects(db: Session = Depends(get_db),  current_user: User = Depends(get_current_user)):
 
-    projects = db.query(Project).all()
+    projects = db.query(Project).filter(
+        Project.user_id == current_user.id
+    ).all()
 
     return projects
