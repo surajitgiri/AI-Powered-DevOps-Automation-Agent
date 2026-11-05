@@ -5,6 +5,9 @@ from app.api.v1.agents import router as agent_router
 from app.api.v1.database import router as database_router
 from app.api.v1.projects import router as project_router
 
+from app.core.config import settings
+from app.api.v1.router import api_router
+
 app = FastAPI(
     title="OpsPilot AI",
     description="AI Powered DevOps Automation Platform",
@@ -23,6 +26,11 @@ app.include_router(
     agent_router,
     prefix="/api/v1/agents",
     tags=["AI Agents"]
+)
+
+app.include_router(
+    api_router,
+    prefix="/api/v1"
 )
 
 app.include_router(
