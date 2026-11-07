@@ -1,5 +1,3 @@
-from urllib import response
-from dns.tsig import Key
 import boto3
 import httpx
 import json
@@ -36,7 +34,7 @@ class GitHubService:
         }
 
         query = "&".join(
-            f"{Key} = {httpx.QueryParams({Key: value})[key]}"
+            f"{key} = {httpx.QueryParams({key: value})[key]}"
             for key, value in params.items()
         )
 
@@ -73,3 +71,40 @@ class GitHubService:
             )
         
         return access_token
+
+    # --------------------------------
+    # 3. Common GitHub API request
+    # --------------------------------
+
+    def github_request(
+        self,
+        access_token: str,
+        endpoint: str,
+        params: dict | None = None
+    ):
+      
+      response = httpx.get(
+        f"{GITHUB_API}{endpoint}",
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28"
+        },
+        params=params,
+        timeout=20
+      )
+
+      response.raise_for_status()
+
+      return response.json()
+
+    
+    # --------------------------------
+    # 4. Get GitHub user
+    # --------------------------------
+    def get_github_user(self, access_token: str):
+
+        return self.github_request(
+            access_token,
+            "/user"
+        )
