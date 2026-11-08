@@ -108,3 +108,56 @@ class GitHubService:
             access_token,
             "/user"
         )
+
+    # --------------------------------
+    # 5. List repositories
+    # --------------------------------
+    def get_repositories(self, access_token: str):
+
+        repositories = []
+
+        page = 1
+
+        while True:
+
+            data = self.github_request(
+                access_token,
+                "/user/repos",
+                {
+                    "sort": "updated",
+                    "per_page": 100,
+                    "page": page,
+                    "affiliation": "owner,collaborator,organization_member"
+                }
+            )
+
+            if not data:
+                break
+
+            repositories.extend(data)
+
+            if len(data) < 100:
+                break
+
+            page += 1
+
+        return  repositories
+
+    # --------------------------------
+    # 6. Get branches
+    # --------------------------------
+
+def get_branches(
+        self,
+        access_token: str,
+        owner: str,
+        repository: str
+    ):
+
+        return self.github_request(
+            access_token,
+            f"/repos/{owner}/{repository}/branches",
+            {
+                "per_page": 100
+            }
+        )
