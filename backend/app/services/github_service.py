@@ -147,7 +147,7 @@ class GitHubService:
     # 6. Get branches
     # --------------------------------
 
-def get_branches(
+    def get_branches(
         self,
         access_token: str,
         owner: str,
@@ -161,3 +161,60 @@ def get_branches(
                 "per_page": 100
             }
         )
+
+    # --------------------------------
+    # 7. Get latest commit
+    # --------------------------------
+
+    def get_latest_commit(
+        self,
+        access_token: str,
+        owner: str,
+        repository: str,
+        branch: str
+    ):
+
+        data = self.github_request(
+            access_token,
+            f"/repos/{owner}/{repository}/commits/{branch}"
+        )
+
+        return data
+
+    # --------------------------------
+    # 8. Save token in AWS Secrets Manager
+    # --------------------------------
+
+    def save_token(
+        self,
+        user_id: str,
+        project_id: str,
+        access_token: str
+    ):
+
+        secret_name = (
+            f"opspilot/github/{user_id}/{project_id}"
+        )
+
+        secret_value = json.dumps({
+            "access_token": access_token
+        })
+
+        try:
+
+            result = self.secrets_client.create_secret(
+                Name=secret_name,
+                SecretString=secret_value,
+                Description="OpsPilot AI GitHub OAuth token"
+            )
+
+            return result["ARN"]
+
+        except self.secrets_client.exceptions.ResourceExistsException:
+
+            result = self.secrets_client.put_secret_value(
+                SecretId=secret_name,
+                SecretString=secret_value
+            )
+
+            return result["ARN"]
