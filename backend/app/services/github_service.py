@@ -218,3 +218,19 @@ class GitHubService:
             )
 
             return result["ARN"]
+
+    # --------------------------------
+    # 9. Retrieve token
+    # --------------------------------
+
+    def get_token(self, secret_ref: str):
+
+        result = self.secrets_client.get_secret_value(
+            SecretId=secret_ref
+        )
+
+        secret = json.loads(
+            result["SecretString"]
+        )
+
+        return secret["access_token"]
