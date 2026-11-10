@@ -1,3 +1,4 @@
+from uuid import UUID
 from pydantic import BaseModel, EmailStr, Field
 
 class UserRegister(BaseModel):
@@ -11,8 +12,8 @@ class UserRegister(BaseModel):
 
 class UserLogin(BaseModel):
 
-     email: EmailStr
-     password: str
+    email: EmailStr
+    password: str
 
 
 class TokenResponse(BaseModel):
@@ -21,12 +22,12 @@ class TokenResponse(BaseModel):
 
     token_type: str = "bearer"
 
+
 class UserResponse(BaseModel):
 
-    id: str
+    id: UUID
     name: str
     email: EmailStr
     is_active: bool
 
-    class Config:
-        form_attributes = True
+    model_config = {"from_attributes": True}

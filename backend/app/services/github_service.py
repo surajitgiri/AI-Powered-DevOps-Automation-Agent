@@ -1,6 +1,7 @@
 import boto3
 import httpx
 import json
+from urllib.parse import urlencode
 
 from botocore.exceptions import ClientError
 from app.core.config import settings
@@ -27,16 +28,13 @@ class GitHubService:
     def get_authorization_url(self, state: str):
 
         params = {
-            "client_id": settings.GITHUB_CLIENT_ID,
-            "redirect_uri": settings.GITHUB_CALLBACK_URL,
+            "client_id": settings.GITHUB_CLIENT_ID.strip(),
+            "redirect_uri": settings.GITHUB_CALLBACK_URL.strip(),
             "scope": "repo read:user",
             "state": state
         }
 
-        query = "&".join(
-            f"{key} = {httpx.QueryParams({key: value})[key]}"
-            for key, value in params.items()
-        )
+        query = urlencode(params)
 
         return f"{GITHUB_AUTHORIZE_URL}?{query}"
 
@@ -66,9 +64,8 @@ class GitHubService:
         access_token = data.get("access_token")
 
         if not access_token:
-            raise ValueError(
-                "GitHub did not return an access token"
-            )
+            err = data.get("error_description") or data.get("error") or "GitHub did not return an access token"
+            raise ValueError(f"GitHub token exchange failed: {err}")
         
         return access_token
 

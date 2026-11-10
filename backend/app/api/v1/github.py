@@ -183,13 +183,15 @@ def github_callback(
             )
         )
     
-    except Exception:
+    except Exception as e:
 
         db.rollback()
+        import traceback
+        traceback.print_exc()
 
         raise HTTPException(
             status_code=500,
-            detail="GitHub connection failed"
+            detail=f"GitHub connection failed: {str(e)}"
         )
 
 # --------------------------------
@@ -385,3 +387,53 @@ def get_repository_branches(
 # --------------------------------
 # 6. Get latest commit
 # --------------------------------
+@router.get("/latest-commit")
+def get_latest_commit(
+    project_id: str,
+    branch: str = Query(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+
+     connection = db.query(GitHubConnection).filter(
+        GitHubConnection.user_id == current_user.id,
+        GitHubConnection.project_id == project_id,
+        GitHubConnection.is_active == True
+    ).first()
+
+     if not connection or not connection.repository_name:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Repository not connected"
+        )
+
+     try:
+
+        access_token =  github_service.get_token(
+            connection.token_secret_ref
+        )
+
+        owner, repository = connection.repository_name.split("/", 1)
+
+        commit = github_service.get_latest_commit(
+            access_token,
+            owner,
+            repository,
+            branch
+        )
+
+        return {
+            "repository": connection.repository_name,
+            "branch": branch,
+            "commit_sha": commit["sha"],
+            "commit_message": commit["commit"]["message"],
+            "author": commit["commit"]["author"]["name"]
+        }
+
+     except Exception:
+
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to retrieve latest commit"
+        )
