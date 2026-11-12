@@ -58,3 +58,83 @@ def create_deployment_plan(
         Project.id == request.project_id,
         Project.user_id == current_user.id
     ).first()
+
+    if not project:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found"
+        )
+
+    # ----------------------------------
+    # 2. Get GitHub connection
+    # ----------------------------------
+    github_connection = db.query(
+        GitHubConnection
+    ).filter(
+        GitHubConnection.user_id == current_user.id,
+        GitHubConnection.project_id == project.id,
+        GitHubConnection.is_active.is_(True)
+    ).first()
+
+    if not github_connection:
+
+        raise HTTPException(
+
+            status_code=404,
+
+            detail="GitHub account is not connected"
+
+        )
+    
+    if not github_connection.repository_name:
+
+        raise HTTPException(
+
+            status_code=400,
+
+            detail="No GitHub repository is connected to this project"
+
+        )
+    
+    # ----------------------------------
+    # 3. Retrieve GitHub access token
+    # ----------------------------------
+    try:
+
+        access_token = github_service.get_token(
+            github_connection.token_secret_ref
+        )
+
+    except Exception:
+
+        logger.exception("Failed to retrieve GitHub token")
+
+        raise HTTPException(
+            status_code=502,
+            detail="Unable to access the connected GitHub account"
+        )
+    
+    # ----------------------------------
+    # 4. Identify repository and branch
+    # ----------------------------------
+    repository = github_connection.repository_name
+
+    branch = (
+        request.branch
+        or project.default_branch
+        or "main"
+    )
+
+    repository_url = github_connection.repository_url
+
+    if not repository_url:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Repository URL is missing"
+        )
+    
+    # ----------------------------------
+    # 5. Retrieve latest commit
+    # ----------------------------------
