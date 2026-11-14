@@ -13,6 +13,10 @@ from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+from app.models.user import User
+from app.models.project import Project
+from app.models.aws_connection import AWSConnection
+from app.models.agent_session import AgentSession
 
 
 class Deployment(Base):

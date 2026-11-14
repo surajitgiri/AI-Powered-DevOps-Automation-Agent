@@ -1,4 +1,3 @@
-from app.api.v1.auth import router
 import json 
 import logging
 import httpx
@@ -169,12 +168,12 @@ def create_deployment_plan(
             branch
         )
 
-    except Exception:
+    except Exception as e:
 
         logger.exception("Repository inspection failed")
         raise HTTPException(
             status_code=502,
-            detail="Unable to inspect GitHub repository"
+            detail=f"Unable to inspect GitHub repository: {str(e)}"
         )
     
     # ----------------------------------
@@ -212,13 +211,13 @@ def create_deployment_plan(
         plan = DeploymentPlan.model_validate(
             plan_data
         )
-    except Exception:
+    except Exception as e:
 
         logger.exception("AI deployment planning failed")
 
         raise HTTPException(
             status_code=502,
-            detail="Unable to generate deployment plan"
+            detail=f"Unable to generate deployment plan: {str(e)}"
         )
     
     # ----------------------------------
@@ -323,14 +322,14 @@ def create_deployment_plan(
 
             plan=plan
         )
-    except Exception:
+    except Exception as e:
 
         db.rollback()
 
         logger.exception("Failed to save deployment plan")
         raise HTTPException(
             status_code=500,
-            detail="Failed to save deployment plan"
+            detail=f"Failed to save deployment plan: {str(e)}"
         )
 
 

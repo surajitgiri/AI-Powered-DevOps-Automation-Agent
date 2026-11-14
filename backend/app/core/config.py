@@ -30,8 +30,12 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
 
     # Gemini
-    GEMINI_API_KEY: str
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-3.5-flash"
+
+    # Ollama (local LLM)
+    OLLAMA_MODEL: str = "llama3.2"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     # AWS
     AWS_REGION: str = "ap-south-1"

@@ -1,7 +1,7 @@
 import json
 from typing import Any
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from google import genai
+from google.genai import types
 from langgraph.graph import StateGraph, START, END
 from app.core.config import settings
 from app.agents.state import DeploymentAgentState
@@ -12,74 +12,52 @@ from app.agents.prompts import (
 from app.schemas.deployment import DeploymentPlan
 
 # --------------------------------------
-# Initialize Gemini
+# Initialize Google GenAI Client
 # --------------------------------------
 
-def get_llm():
-
-    return ChatGoogleGenerativeAI(
-        model = settings.GEMINI_MODEL,
-        google_api_key = settings.GEMINI_API_KEY,
-        temperature = 0
-    )
+def get_client() -> genai.Client:
+    return genai.Client(api_key=settings.GEMINI_API_KEY)
 
 # --------------------------------------
 # Node 1: Generate Deployment Plan
 # --------------------------------------
+
 def generate_deployment_paln(
     state: DeploymentAgentState
 ):
-
-    llm = get_llm()
-
-    structured_llm = llm.with_structured_output(
-        DeploymentPlan
-    )
+    client = get_client()
 
     user_prompt = DEPLOYMENT_USER_PROMPT.format(
-
         user_prompt=state["user_prompt"],
-
         project_name=state["project_name"],
-
         repository=state["repository"],
-
         repository_url=state["repository_url"],
-
         branch=state["branch"],
-
         commit_sha=state["commit_sha"],
-
         environment=state["environment"],
-
         deployment_target=state["deployment_target"],
-
-        repository_context = json.dumps(
+        repository_context=json.dumps(
             state["repository_context"],
             indent=2
         )
     )
 
-    reponse = structured_llm.invoke([
+    full_prompt = f"{DEPLOYMENT_SYSTEM_PROMPT}\n\n{user_prompt}"
 
-        SystemMessage(
-            content=DEPLOYMENT_SYSTEM_PROMPT
+    response = client.models.generate_content(
+        model=settings.GEMINI_MODEL,
+        contents=full_prompt,
+        config=types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=DeploymentPlan,
+            temperature=0.0
         ),
+    )
 
-        HumanMessage(
-            content=user_prompt
-        )
-    ])
+    plan = DeploymentPlan.model_validate_json(response.text)
 
-    # Validate the generated plan.
-    if not isinstance(reponse, DeploymentPlan):
-
-        reponse = DeploymentPlan.model_validate(
-            reponse
-        )
-    
     # Backend-controlled fields must not be changed by the LLM.
-    reponse = reponse.model_copy(
+    plan = plan.model_copy(
         update={
             "branch": state["branch"],
             "commit_sha": state["commit_sha"],
@@ -90,7 +68,7 @@ def generate_deployment_paln(
     )
 
     return {
-        "plan": reponse.model_dump(mode=json)
+        "plan": plan.model_dump(mode="json")
     }
 
 # --------------------------------------
@@ -99,38 +77,33 @@ def generate_deployment_paln(
 def validate_deployment_plan(
     state: DeploymentAgentState
 ):
-
     plan = DeploymentPlan.model_validate(
         state["plan"]
     )
 
     if len(plan.steps) < 3:
-
         raise ValueError(
             "Deployment plan must contain at least 3 steps"
         )
     
     if plan.execution_allowed is not False:
-
         raise ValueError(
             "Deployment execution is not permitted"
         )
     
     if plan.requires_approval is not True:
-
         raise ValueError(
             "Human approval is mandatory"
         )
 
     return {
-        "plan": plan.model_dump(mode=json)
+        "plan": plan.model_dump(mode="json")
     }
 
 # --------------------------------------
 # Build LangGraph workflow
 # --------------------------------------
 def build_deployment_graph():
-
     graph = StateGraph(
         DeploymentAgentState
     )
@@ -168,7 +141,6 @@ def build_deployment_graph():
 def run_deployment_planner(
     initial_state: dict[str, Any]
 ):
-
     deployment_graph = build_deployment_graph()
 
     result = deployment_graph.invoke(

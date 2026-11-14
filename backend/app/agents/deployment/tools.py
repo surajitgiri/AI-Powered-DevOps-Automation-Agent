@@ -85,11 +85,12 @@ def get_repository_file(
         return content[:12000]
     
     except httpx.HTTPStatusError as error:
-
-        if error.response.status_code == 404:
+        if error.response.status_code in (404, 400):
             return None
-        
         raise
+    except (httpx.RequestError, httpx.RemoteProtocolError):
+        # If checking an optional file encounters a network error, treat as not found
+        return None
 
 # --------------------------------------
 # Collect repository context

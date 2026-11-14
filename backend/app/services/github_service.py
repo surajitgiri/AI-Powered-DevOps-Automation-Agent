@@ -79,21 +79,31 @@ class GitHubService:
         endpoint: str,
         params: dict | None = None
     ):
+      headers = {
+          "Authorization": f"Bearer {access_token}",
+          "Accept": "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "OpsPilot-DevOps-Agent/1.0"
+      }
       
-      response = httpx.get(
-        f"{GITHUB_API}{endpoint}",
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28"
-        },
-        params=params,
-        timeout=20
-      )
-
-      response.raise_for_status()
-
-      return response.json()
+      # Retry up to 3 times on transient connection drops
+      last_err = None
+      for attempt in range(3):
+          try:
+              response = httpx.get(
+                  f"{GITHUB_API}{endpoint}",
+                  headers=headers,
+                  params=params,
+                  timeout=25
+              )
+              response.raise_for_status()
+              return response.json()
+          except (httpx.RemoteProtocolError, httpx.ConnectError, httpx.ReadTimeout) as exc:
+              last_err = exc
+              continue
+      
+      if last_err:
+          raise last_err
 
     
     # --------------------------------

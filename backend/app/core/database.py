@@ -1,15 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 
-# Database connection
+# Use NullPool to avoid PgBouncer/psycopg3 rollback conflicts with Neon
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=5,
-    pool_recycle=300
+    poolclass=NullPool,
 )
 
 # Session factory

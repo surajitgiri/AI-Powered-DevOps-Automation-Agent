@@ -92,9 +92,9 @@ class DeploymentPlan(BaseModel):
         le=1
     )
 
-    requires_approval: Literal[True] = True
+    requires_approval: bool = True
 
-    execution_allowed: Literal[False] = False
+    execution_allowed: bool = False
 
 
 # -----------------------------------
