@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     # AWS
     AWS_REGION: str = "ap-south-1"
 
+    # Docker
+    DOCKER_BUILD_CONTEXT_ROOT: str = "./docker-workspaces"
+    DOCKER_DEFAULT_NETWORK: str = "bridge"
+    DOCKER_BUILD_ENABLED: bool = True
+    DOCKER_MAX_BUILD_CONTEXT_MB: int = 500
+
     model_config = SettingsConfigDict(
         env_file=(str(BACKEND_DIR / ".env"), str(ROOT_DIR / ".env"), ".env"),
         env_file_encoding="utf-8",
