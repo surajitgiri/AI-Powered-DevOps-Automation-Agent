@@ -148,6 +148,8 @@ class DockerService:
             raise ValueError(
                 "Docker build context exceeds maximum allowed size"
             )
+
+        return requested_path
     
     # --------------------------------
     # 4. Validate Image Name and Tag
