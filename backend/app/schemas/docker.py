@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 
 class DockerBuildRequest(BaseModel):
 
@@ -27,3 +27,22 @@ class DockerBuildResponse(BaseModel):
     image_tag: Optional[str] = None
 
     image_size: Optional[int] = None
+
+# For Gemini
+class DockerfileGenerateRequest(BaseModel):
+
+    project_id: str
+    branch: Optional[str] = None
+    application_type: Optional[
+        Literal["nextjs", "nodejs", "fastapi"]
+    ] = None
+
+class DockerfileGenerateResponse(BaseModel):
+
+    success: bool
+    project_id: str
+    repository: str
+    detected_framework: str
+    dockerfile: str
+    dockerignore: str
+    message: str
