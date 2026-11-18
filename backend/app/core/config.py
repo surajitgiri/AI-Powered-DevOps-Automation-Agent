@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     DOCKER_BUILD_ENABLED: bool = True
     DOCKER_MAX_BUILD_CONTEXT_MB: int = 500
 
+    # Github Clone
+    GITHUB_CLONE_WORKSPACE: str = "./docker-workspaces"
+    GITHUB_MAX_ARCHIVE_SIZE_MB: int = 100
+
     model_config = SettingsConfigDict(
         env_file=(str(BACKEND_DIR / ".env"), str(ROOT_DIR / ".env"), ".env"),
         env_file_encoding="utf-8",

@@ -132,54 +132,37 @@ class DockerfileGeneratorService:
     # -----------------------------------
     def nextjs_dockerfile(self):
 
-        return """
-        FROM node:22-alpine AS base
+           return """
+            FROM node:22-alpine AS builder
 
-        WORKDIR /app
+            WORKDIR /app
 
-        # Install dependencies
-        FROM base AS dependencies
+            COPY package*.json ./
 
-        COPY package*.json ./
+            RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-        RUN npm ci
+            COPY . .
 
-        # Build application
-        FROM base AS builder
+            ENV NEXT_TELEMETRY_DISABLED=1
 
-        WORKDIR /app
+            RUN npm run build
 
-        COPY --from=dependencies /app/node_modules ./node_modules
+            FROM node:22-alpine
 
-        COPY . .
+            WORKDIR /app
 
-        ENV NEXT_TELEMETRY_DISABLED=1
+            ENV NODE_ENV=production
 
-        RUN npm run build
+            ENV NEXT_TELEMETRY_DISABLED=1
 
-        # Production image
-        FROM base AS runner
+            ENV PORT=3000
 
-        WORKDIR /app
+            COPY --from=builder /app ./
 
-        ENV NODE_ENV=production
+            EXPOSE 3000
 
-        ENV NEXT_TELEMETRY_DISABLED=1
-
-        COPY --from=builder /app/public ./public
-
-        COPY --from=builder /app/.next ./.next
-
-        COPY --from=builder /app/node_modules ./node_modules
-
-        COPY --from=builder /app/package.json ./package.json
-
-        EXPOSE 3000
-
-        ENV PORT=3000
-
-        CMD ["npm", "start"]
-        """.strip()
+            CMD ["npm", "start"]
+            """.strip()
        
     # -----------------------------------
     # 4. Generate Node.js Dockerfile
