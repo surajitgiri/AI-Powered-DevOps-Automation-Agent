@@ -46,3 +46,25 @@ class DockerfileGenerateResponse(BaseModel):
     dockerfile: str
     dockerignore: str
     message: str
+
+# Github Clone
+class GitHubCloneRequest(BaseModel):
+
+    project_id: str
+    branch: Optional[str] = None
+
+class GitHubCloneResponse(BaseModel):
+
+    success: bool
+
+    workspace_id: str
+
+    repository: str
+
+    branch: str
+
+    framework: str
+
+    files: dict
+
+    message: str

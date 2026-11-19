@@ -171,9 +171,10 @@ def create_deployment_plan(
     except Exception as e:
 
         logger.exception("Repository inspection failed")
+        status_code = 401 if "expired" in str(e).lower() or "reconnect" in str(e).lower() else 502
         raise HTTPException(
-            status_code=502,
-            detail=f"Unable to inspect GitHub repository: {str(e)}"
+            status_code=status_code,
+            detail=str(e) if isinstance(e, ValueError) else "Unable to inspect GitHub repository"
         )
     
     # ----------------------------------

@@ -32,10 +32,19 @@ def get_repository_metadata(
         f"{quote(repo_name, safe='')}"
     )
 
-    return github_service.github_request(
-        access_token,
-        endpoint
-    )
+    try:
+        return github_service.github_request(
+            access_token,
+            endpoint
+        )
+    except httpx.HTTPStatusError as error:
+        if error.response.status_code == 401:
+            raise ValueError(
+                "GitHub token is expired or invalid. "
+                "Please reconnect your GitHub account via "
+                "GET /api/v1/github/connect."
+            )
+        raise
 
 # --------------------------------------
 # Get repository file
