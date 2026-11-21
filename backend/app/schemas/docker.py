@@ -68,3 +68,62 @@ class GitHubCloneResponse(BaseModel):
     files: dict
 
     message: str
+
+# Dockerfile Persistence + Human Approval + Asynchronous Docker Build.
+class PrepareBuildRequest(BaseModel):
+    project_id: str
+    workspace_id: str
+    branch: Optional[str] = None
+    application_type: Optional[str] = None
+
+class PrepareBuildResponse(BaseModel):
+    success: bool
+    workspace_id: str
+    repository: str
+    branch: str
+    framework: str
+    dockerfile: str
+    dockerignore: str
+    message: str
+
+# -----------------------------------------
+# Docker Build Approval
+# -----------------------------------------
+class DockerBuildApprovalRequest(BaseModel):
+    project_id: str
+    workspace_id: str
+    image_name: str
+    image_tag: str = "v1"
+
+class DockerBuildApprovalResponse(BaseModel):
+
+    success: bool
+    deployment_id: str
+    approval_id: str
+    status: str
+    message: str
+
+# -----------------------------------------
+# Docker Build Approval Decision
+# -----------------------------------------
+class DockerBuildApprovalDecision(BaseModel):
+
+    action: Literal["approve", "reject"]
+    remarks: Optional[str] = None
+
+# -----------------------------------------
+# Docker Build Status
+# -----------------------------------------
+class DockerBuildStatusResponse(BaseModel):
+
+    deployment_id: str
+
+    status: str
+
+    docker_image: Optional[str] = None
+
+    image_id: Optional[str] = None
+
+    image_size: Optional[int] = None
+
+    error_message: Optional[str] = None
