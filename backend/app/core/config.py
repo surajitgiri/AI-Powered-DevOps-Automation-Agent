@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     GITHUB_CLONE_WORKSPACE: str = "./docker-workspaces"
     GITHUB_MAX_ARCHIVE_SIZE_MB: int = 100
 
+    # Redis
+    REDIS_URL: str = "redis://default:krGTYBbBtvU2Nn4fhDlQZxp0jiKfSV1A@redis-19240.c278.us-east-1-4.ec2.cloud.redislabs.com:19240"
+
     model_config = SettingsConfigDict(
         env_file=(str(BACKEND_DIR / ".env"), str(ROOT_DIR / ".env"), ".env"),
         env_file_encoding="utf-8",

@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.workers.celery_app import celery_app
@@ -40,6 +41,8 @@ def build_docker_image(
        
        # Mark build as running.
        deployment.status = "building"
+       deployment.error_message = None
+       deployment.started_at = datetime.now(timezone.utc)
        db.commit()
 
        workspace_root = Path(
@@ -66,6 +69,7 @@ def build_docker_image(
        deployment.docker_image = result["image_reference"]
        deployment.image_digest = result["image_id"]
        deployment.status = "build_success"
+       deployment.completed_at = datetime.now(timezone.utc)
 
        db.commit()
 
@@ -98,6 +102,7 @@ def build_docker_image(
         if deployment:
             deployment.status = "build_failed"
             deployment.error_message = str(exc)
+            deployment.completed_at = datetime.now(timezone.utc)
             db.commit()
         
         raise

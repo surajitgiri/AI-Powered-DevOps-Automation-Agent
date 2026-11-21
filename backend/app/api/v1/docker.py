@@ -1,12 +1,14 @@
-from app.core.config import settings
-from fastapi import Path
-from click import UUID
 import logging
+from datetime import datetime, timezone
+from pathlib import Path
+from uuid import UUID
+
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException
 )
+from app.core.config import settings
 
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -28,7 +30,8 @@ from app.schemas.docker import (
     DockerfileGenerateResponse,
     PrepareBuildRequest,
     PrepareBuildResponse,
-    DockerBuildRequest
+    DockerBuildApprovalRequest,
+    DockerBuildApprovalResponse
 )
 
 from app.services.github_service import GitHubService
@@ -375,9 +378,12 @@ def prepare_docker_build(
         )
 
 
-@router.post("/request-build")
+@router.post(
+    "/request-build",
+    response_model = DockerBuildApprovalResponse
+)
 def request_docker_build(
-    request: DockerBuildRequest,
+    request: DockerBuildApprovalRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):  
@@ -458,8 +464,10 @@ def request_docker_build(
 
         # Create approval request.
         approval = Approval(
+            user_id = current_user.id,
             deployment_id = deployment.id,
-            requested_by = current_user.id,
+            action_type = "docker_build",
+            description = f"Build Docker image {image_reference}",
             status = "pending"
         )
 
@@ -526,6 +534,7 @@ def approve_docker_build(
 
         approval.status = "approved"
         approval.approved_by = current_user.id
+        approval.approved_at = datetime.now(timezone.utc)
 
         db.commit()
 
@@ -565,3 +574,30 @@ def approve_docker_build(
             status_code = 500,
             detail = "Unable to approve Docker build"
         )
+
+
+@router.get("/build-status/{deployment_id}")
+def get_docker_build_status(
+    deployment_id: str,
+    current_user: User = Depends(get_current_user),
+    db:Session = Depends(get_db)
+):  
+
+    deployment = db.query(Deployment).filter(
+        Deployment.id == deployment_id,
+        Deployment.user_id == current_user.id
+    ).first()
+
+    if not deployment:
+        raise HTTPException(
+            status_code = 404,
+            detail = "Deployment not found"
+        )
+    
+    return {
+        "deployment_id": str(deployment.id),
+        "status": deployment.status,
+        "docker_image": deployment.docker_image,
+        "image_digest": deployment.image_digest,
+        "error_message": deployment.error_message
+    }

@@ -49,14 +49,14 @@ class DockerService:
 
             return True
         
-        except DockerException:
+        except DockerException as exc:
 
             logger.exception(
                 "Docker Engine connection failed"
             )
 
             raise RuntimeError(
-                "Unable to connect to Docker Engine"
+                f"Unable to connect to Docker Engine: {str(exc)}"
             )
     
     # --------------------------------
