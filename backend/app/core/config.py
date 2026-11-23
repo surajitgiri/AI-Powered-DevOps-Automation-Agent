@@ -1,5 +1,6 @@
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Optional
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 ROOT_DIR = Path(__file__).resolve().parents[3]
@@ -39,6 +40,11 @@ class Settings(BaseSettings):
 
     # AWS
     AWS_REGION: str = "ap-south-1"
+    AWS_PROFILE: Optional[str] = None
+    AWS_ACCOUNT_ID: Optional[str] = None
+    AWS_ECR_REPOSITORY_PREFIX: str = "opspilot"
+    AWS_DEFAULT_EC2_INSTANCE_ID: Optional[str] = None
+    AWS_SSM_POLL_INTERVAL: int = 5
 
     # Docker
     DOCKER_BUILD_CONTEXT_ROOT: str = "./docker-workspaces"
