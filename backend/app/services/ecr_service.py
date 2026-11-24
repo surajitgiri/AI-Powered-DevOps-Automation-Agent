@@ -89,3 +89,133 @@ class ECRService:
             "registry_url": registry_url,
             "docker_client": docker_client
         }
+    
+    # --------------------------------
+    # 4. Push Docker Image to ECR
+    # --------------------------------
+    def push_image(
+        self,
+        local_image,
+        repository_name,
+        image_tag
+    ):
+
+        docker_client = None
+
+        try:
+
+            # Create repository if necessary
+            repository = self.create_repository(
+                repository_name
+            )
+
+            repository_uri = repository[
+                "repositoryUri"
+            ]
+
+            # Authenticate Docker
+            auth = self.authenticate_docker()
+
+            docker_client = auth["docker_client"]
+
+            # Retrieve local Docker image
+            image = docker_client.images.get(
+                local_image
+            )
+
+            # Create ECR image tag
+            ecr_image = (
+                f"{repository_uri}:{image_tag}"
+            )
+
+            # Tag Image
+            image.tag(
+                repository_uri,
+                tag = image_tag
+            )
+
+            logger.info(
+                "Pushing Docker image: %s",
+                ecr_image
+            )
+
+            # Push image
+            push_logs = docker_client.images.push(
+                repository = repository_uri,
+                tag = image_tag,
+                stream = True,
+                decode = True
+            )
+
+            push_status = []
+
+            for entry in push_logs:
+
+                if "error" in entry:
+                    raise RuntimeError(
+                        entry["error"]
+                    )
+                
+                if "status" in entry:
+                    push_status.append(
+                        entry["status"]
+                    )
+
+            # Verify image exists in ECR
+            ecr_client = self.get_client()
+
+            image_details = ecr_client.describe_images(
+                repository_name = repository_name,
+
+                imageIds = [
+                    {
+                        "imageTag": image_tag
+                    }
+                ]
+            )
+
+            image_info = image_details["imageDetails"][0]
+
+            logger.info(
+                "Docker image pushed successfully: %s",
+                ecr_image
+            )
+
+            return {
+                "success": True,
+
+                "repository_name": repository_name,
+
+                "repository_uri": repository_uri,
+
+                "image_uri": ecr_image,
+
+                "image_tag": image_tag,
+
+                "image_digest": image_info.get(
+                    "imageDigest"
+                ),
+
+                "image_size": image_info.get(
+                    "imageSizeInBytes"
+                ),
+
+                "push_status": push_status[-10:]
+            }
+        
+        except Exception:
+
+            logger.exception(
+                "ECR image push failed"
+            )
+
+            raise RuntimeError(
+                "Unable to push Docker image to ECR"
+            )
+        
+        finally:
+
+            if docker_client:
+                docker_client.close()
+
+ecr_service = ECRService()
