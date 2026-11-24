@@ -60,3 +60,60 @@ class AWSService:
             raise RuntimeError(
                 "Unable to connect to AWS"
             )
+    
+
+    # --------------------------------
+    # 2. Get AWS Client
+    # --------------------------------
+    def get_client(self, service_name):
+
+        if self.session is None:
+            self.connect()
+        
+        return self.session.client(
+            service_name,
+            region_name = self.region
+        )
+    
+    # --------------------------------
+    # 3. Get AWS Resource
+    # --------------------------------
+    def get_resource(self, service_name):
+
+        if self.session is None:
+            self.connect()
+        
+        return self.session.resource(
+            service_name,
+            region_name = self.region
+        )
+    
+    # --------------------------------
+    # 4. Check AWS Connection
+    # --------------------------------
+    def health_check(self):
+
+
+        try:
+
+            client = self.get_client("sts")
+
+            identity = client.get_caller_identity()
+
+            return {
+                "status": "healthy",
+                "account_id": identity["Account"],
+                "region": self.region
+            }
+        
+        except Exception:
+
+            logger.exception(
+                "AWS health check failed"
+            )
+
+            return {
+                "status": "unhealthy"
+            }
+
+aws_service = AWSService()
